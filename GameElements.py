@@ -48,7 +48,7 @@ class GameElement(object):
         self.isRevealed = True
 
 
-class Bomb(GameElement):
+class Mine(GameElement):
     def __str__(self):
         if self.isRevealed:
             return "X"  # the bomb explodes
@@ -57,7 +57,7 @@ class Bomb(GameElement):
 
     def flag(self):
         """
-        If a bomb is flagged the game has to check if the player has won.
+        If a mine is flagged the game has to check if the player has won.
         :rtype int
         :return: what has to be added to the flagged bombs counter
         """
@@ -69,7 +69,7 @@ class Bomb(GameElement):
 
     def reveal(self):
         """
-        If a bomb is revealed, it explodes and the game is over.
+        If a mine is revealed, it explodes and the game is over.
         :rtype Bool
         :return: Always True
         """

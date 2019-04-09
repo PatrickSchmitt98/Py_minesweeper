@@ -16,34 +16,34 @@ class GameRound(object):
     """
     width: int
     height: int
-    bomb_count: int
+    mine_count: int
     initialized: bool
     ended: bool
     won: bool
-    flagged_bombs: int
+    flagged_mines: int
     revealed_counters: int
     elements: []
 
-    def __init__(self, width: int, height: int, bomb_count: int):
+    def __init__(self, width: int, height: int, mine_count: int):
         """
-        Create a new game round with a field from the specified dimensions and bomb count
+        Create a new game round with a field from the specified dimensions and mine count
         :param width:  width of field
         :param height: height of field
-        :param bomb_count: number of bombs
+        :param mine_count: number of mines
         """
-        self.bomb_count = bomb_count
+        self.mine_count = mine_count
         self.width = width
         self.height = height
         self.ended = False
         self.won = False
         self.initialized = False
-        self.flagged_bombs = 0
+        self.flagged_mines = 0
         self.revealed_counters = 0
         self.elements = zeros((height, width), dtype=GameElements.GameElement)  # element matrix
 
-    def get_adjacent_bomb_count(self, x, y):
+    def get_adjacent_mine_count(self, x, y):
         """
-        This method determines how many bombs are adjacent to an element on (x,y)
+        This method determines how many mines are adjacent to an element on (x,y)
         :param x: x position
         :param y: y position
         :rtype int
@@ -55,34 +55,34 @@ class GameRound(object):
                 for check_x in range(x - 1, x + 2):
                     if 0 <= check_x < self.width:
                         element = self.elements[check_y, check_x]
-                        if isinstance(element, GameElements.Bomb):
+                        if isinstance(element, GameElements.Mine):
                             counter += 1
         return counter
 
     def place_elements(self, x, y):
         """
-        This method places bombs in the elements matrix on random positions.
-        No bomb is placed on (x,y).
-        After the bombs are placed the matrix is filled with counters.
+        This method places mines in the elements matrix on random positions.
+        No mine is placed on (x,y).
+        After the mines are placed the matrix is filled with counters.
         :param x: x ignore
         :param y: y ignore
         """
         self.initialized = True
         positions = [(y, x)]
-        for i in range(0, self.bomb_count):
+        for i in range(0, self.mine_count):
             k = randint(0, self.width - 1)
             j = randint(0, self.height - 1)
             if positions.__contains__((j, k)):
                 i -= 1
             else:
                 positions.append((j, k))
-                self.elements[j][k] = GameElements.Bomb()
+                self.elements[j][k] = GameElements.Mine()
         print(positions)
-        self.elements[y][x] = GameElements.Counter(self.get_adjacent_bomb_count(x, y))
+        self.elements[y][x] = GameElements.Counter(self.get_adjacent_mine_count(x, y))
         for i in range(0, self.height):
             for j in range(0, self.width):
                 if not positions.__contains__((i, j)):
-                    counter = self.get_adjacent_bomb_count(j, i)
+                    counter = self.get_adjacent_mine_count(j, i)
                     self.elements[i][j] = GameElements.Counter(counter)
 
     @property
@@ -126,8 +126,8 @@ class GameRound(object):
             if self.initialized:
                 element: GameElements.GameElement = self.elements[y][x]  # the matrix is indexed differently, so the
                 # coords differ
-                self.flagged_bombs += element.flag()
-                if self.flagged_bombs == self.bomb_count:
+                self.flagged_mines += element.flag()
+                if self.flagged_mines == self.mine_count:
                     self.ended = True
                     self.won = True
                 return self.__str__
@@ -149,7 +149,7 @@ class GameRound(object):
                 self.place_elements(x, y)
             element: GameElements.GameElement = self.elements[y][x]  # the matrix is indexed differently, so we have
             # to switch x and y
-            if isinstance(element, GameElements.Bomb):
+            if isinstance(element, GameElements.Mine):
                 if element.reveal():
                     self.ended = True
                     self.won = False
@@ -157,7 +157,7 @@ class GameRound(object):
                 if element.reveal():
                     self.reveal_adjacent_counters(x, y)
                 self.revealed_counters += 1
-                if self.revealed_counters == self.width * self.height - self.bomb_count:
+                if self.revealed_counters == self.width * self.height - self.mine_count:
                     self.ended = True
                     self.won = True
             if nop:
@@ -192,8 +192,8 @@ class GameRound(object):
         sb.append(str(self.width))
         sb.append(" x ")
         sb.append(str(self.height))
-        sb.append(" Bombs: ")
-        sb.append(str(self.bomb_count))
+        sb.append(" Mines: ")
+        sb.append(str(self.mine_count))
         sb.append("\n")
         for x in range(0, self.width):
             sb.append(str(x))
@@ -268,7 +268,9 @@ class Manager(object):
                 self.game_round = GameRound(16, 16, 40)
                 return self.game_round.print_empty()
         elif message[:4] == "help":
-            return ""
-
+            filename = "help.txt"
+            with open(filename) as help:
+                lines = help.readline()
+            return lines
         else:
             return "Unrecognized command. Use 'help' for a list of commands."
