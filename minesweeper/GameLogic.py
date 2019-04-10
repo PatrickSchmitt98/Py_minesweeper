@@ -3,7 +3,7 @@ from typing import List
 
 from numpy import zeros
 
-import GameElements
+from minesweeper import GameElements
 
 """
 This file contains the logic of a minesweeper game.
@@ -77,7 +77,6 @@ class GameRound(object):
             else:
                 positions.append((j, k))
                 self.elements[j][k] = GameElements.Mine()
-        print(positions)
         self.elements[y][x] = GameElements.Counter(self.get_adjacent_mine_count(x, y))
         for i in range(0, self.height):
             for j in range(0, self.width):
@@ -100,16 +99,24 @@ class GameRound(object):
                 sb.append("You won:\n")
             else:
                 sb.append("Game Over:\n")
-        sb.append("  ")
+        sb.append("    ")
         for x in range(0, self.width):
             sb.append(str(x))
-            sb.append(" ")
+            if x >= 10:
+                sb.append("  ")
+            else:
+                sb.append("   ")
         sb.append("\n")
         for y in range(0, self.height):
-            sb.append(str(y) + " ")
+            sb.append(str(y))
+            if y >= 10:
+                sb.append("  ")
+            else:
+                sb.append("   ")
             for x in range(0, self.width):
                 element: GameElements.GameElement = self.elements[y][x]
-                sb.append(element.__str__() + " ")
+                sb.append(element.__str__())
+                sb.append("   ")
             sb.append("\n")
         result = result.join(sb)
         return result
@@ -190,19 +197,29 @@ class GameRound(object):
         result = ""
         sb.append("New Game: ")
         sb.append(str(self.width))
-        sb.append(" x ")
+        sb.append("x")
         sb.append(str(self.height))
         sb.append(" Mines: ")
         sb.append(str(self.mine_count))
-        sb.append("\n")
+        sb.append("\n\n")
+        sb.append("   ")
         for x in range(0, self.width):
             sb.append(str(x))
-            sb.append(" ")
+            if x >= 10:
+                sb.append("  ")
+            else:
+                sb.append("   ")
         sb.append("\n")
         for y in range(0, self.height):
-            sb.append(str(y) + " ")
+            sb.append(str(y))
+            if y >= 10:
+                sb.append(" ")
+            else:
+                sb.append("  ")
             for x in range(0, self.width):
-                sb.append("* ")
+                sb.append("*")
+                sb.append("   ")
+            sb.append("\n")
         result = result.join(sb)
         return result
 
@@ -234,7 +251,7 @@ class Manager(object):
                 index = message.find(",", 6)
                 try:
                     x = int(message[6:index])
-                    y = int(message[index + 1])
+                    y = int(message[index + 1:])
                 except ValueError:
                     return "Error: Could not parse value for x or y."
                 try:
@@ -248,7 +265,7 @@ class Manager(object):
                 index = message.find(",", 4)
                 try:
                     x = int(message[4:index])
-                    y = int(message[index + 1])
+                    y = int(message[index + 1:])
                 except ValueError:
                     return "Error: Could not parse value for x or y."
                 try:
@@ -258,6 +275,7 @@ class Manager(object):
             else:
                 return "Please use 'new' to start a round of minesweeper first."
         elif message[:3] == "new":
+            self.initialized = True
             if message[4:8] == "easy":
                 self.game_round = GameRound(8, 8, 10)
                 return self.game_round.print_empty()
@@ -267,10 +285,30 @@ class Manager(object):
             elif message[4:10] == "medium":
                 self.game_round = GameRound(16, 16, 40)
                 return self.game_round.print_empty()
+            elif message[4:10] == "custom":
+                index_x = message.find("x", 11)
+                index = message.find(",", 11)
+                try:
+                    width = int(message[11:index_x])
+                    height = int(message[index_x + 1:index])
+                    mine_count = int(message[index + 1:])
+                except ValueError:
+                    self.initialized = False
+                    return "Error: Could not parse one or more arguments."
+                if width <= 0 and height <= 0:
+                    return "Error: Width and height have to be greater than 0."
+                if mine_count <= 0 or mine_count / (width * height) < 0.16:
+                    return "Error: At least 16% of elements have to be mines."  # this restriction is to prevent
+                # reveal_adjacent_mines from causing an overflow
+                if mine_count >= (width * height):
+                    return "Error: Too many mines! At least one element has to be a counter."  # since no mine is placed
+                # on the first revealed position, we need at least one counter
+                self.game_round = GameRound(width, height, mine_count)
+                return self.game_round.print_empty()
         elif message[:4] == "help":
             filename = "help.txt"
-            with open(filename) as help:
-                lines = help.readline()
-            return lines
+            with open(filename) as help_txt:
+                lines = help_txt.readlines()
+            return "".join(lines)
         else:
             return "Unrecognized command. Use 'help' for a list of commands."

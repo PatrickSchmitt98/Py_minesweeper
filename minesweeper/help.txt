@@ -8,9 +8,10 @@ Symbols:
 Commands:
 
     help                    prints this help text
-    new [difficulty]        starts a new game with the selected difficulty
+    new [DIFFICULTY]        starts a new game with the selected difficulty:
            easy             8x8 with 10 mines
            medium           16x16 with 40 mines
            hard             30x16 with 99 mines
+           custom WxH,M     custom game with width W, height H and mine count M
     reveal X,Y              reveals the element on (x,y)
     flag X,Y                flags the element on (x,y)
