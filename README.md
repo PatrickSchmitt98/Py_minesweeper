@@ -1,5 +1,5 @@
 # Py_minesweeper
-A text based python implementation of minesweeper
+A text based implementation of minesweeper in python.
 
 Start the game by running main.py.
 
