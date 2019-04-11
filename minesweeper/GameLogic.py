@@ -1,5 +1,5 @@
 from random import randint
-from typing import List
+from typing import List, Optional
 
 from numpy import zeros
 
@@ -228,14 +228,13 @@ class Manager(object):
     """
     This class manages a game round.
     """
-    game_round: GameRound
-    initialized: bool
+    game_round: Optional[GameRound]
 
     def __init__(self):
         """
         Initializes the manager
         """
-        self.initialized = False
+        self.game_round = None
 
     def parse_input(self, message: str) -> str:
         """
@@ -243,11 +242,10 @@ class Manager(object):
         :param message: message to parse
         :return: result from game round or error
         """
-        if self.initialized:
-            if self.game_round.ended:
-                self.initialized = False  # reset after the game is over
+        if self.game_round is not None and self.game_round.ended:
+            self.game_round = None  # reset after the game is over
         if message[:6] == "reveal":
-            if self.initialized:
+            if self.game_round is not None:
                 index = message.find(",", 6)
                 try:
                     x = int(message[6:index])
@@ -261,7 +259,7 @@ class Manager(object):
             else:
                 return "Please use 'new' to start a round of minesweeper first."
         elif message[:4] == "flag":
-            if self.initialized:
+            if self.game_round is not None:
                 index = message.find(",", 4)
                 try:
                     x = int(message[4:index])
@@ -275,7 +273,6 @@ class Manager(object):
             else:
                 return "Please use 'new' to start a round of minesweeper first."
         elif message[:3] == "new":
-            self.initialized = True
             if message[4:8] == "easy":
                 self.game_round = GameRound(8, 8, 10)
                 return self.game_round.print_empty()
@@ -293,14 +290,17 @@ class Manager(object):
                     height = int(message[index_x + 1:index])
                     mine_count = int(message[index + 1:])
                 except ValueError:
-                    self.initialized = False
+                    self.game_round = None
                     return "Error: Could not parse one or more arguments."
                 if width <= 0 and height <= 0:
+                    self.game_round = None
                     return "Error: Width and height have to be greater than 0."
                 if mine_count <= 0 or mine_count / (width * height) < 0.16:
+                    self.game_round = None
                     return "Error: At least 16% of elements have to be mines."  # this restriction is to prevent
                 # reveal_adjacent_mines from causing an overflow
                 if mine_count >= (width * height):
+                    self.game_round = None
                     return "Error: Too many mines! At least one element has to be a counter."  # since no mine is placed
                 # on the first revealed position, we need at least one counter
                 self.game_round = GameRound(width, height, mine_count)

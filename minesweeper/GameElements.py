@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 """
-This file contains the elements of a minesweeper game: bombs and counters and the abstract GameElement class.
+This file contains the elements of a minesweeper game: mines and counters and the abstract GameElement class.
 """
 
 
